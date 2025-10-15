@@ -5,9 +5,9 @@ type Params = {
   id: string;
 }
 
-export async function GET(request: NextRequest, { params }: { params: Params }) {
+export async function GET(request: NextRequest, context: { params: Promise<Params> }) {
   const { db } = await connectToDb();
-  const productId = params.id;
+  const { id: productId } = await context.params;
 
   const product = await db.collection('products').findOne({ id: productId });
 

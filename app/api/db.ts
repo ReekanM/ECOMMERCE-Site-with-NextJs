@@ -37,8 +37,9 @@ export async function connectToDb() {
     cachedDb = client.db(dbName);
     console.log('MongoDB connected using', explicitUri ? 'MONGODB_URI' : 'user/password', 'to DB', dbName);
     return { client: cachedClient, db: cachedDb };
-  } catch (err: any) {
-    console.error('MongoDB connection error:', err && err.message ? err.message : err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('MongoDB connection error:', message);
     console.error('Hint: check Atlas Network Access (IP whitelist), DB user/password, and that .env is loaded (no surrounding quotes).');
     throw err;
   }

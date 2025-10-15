@@ -9,9 +9,9 @@ export async function GET() {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
         });
-    } catch (err: any) {
-        console.error('GET /api/products failed:', err && err.message ? err.message : err);
-        const message = err && err.message ? err.message : 'Internal Server Error';
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Internal Server Error';
+        console.error('GET /api/products failed:', message);
         return new Response(JSON.stringify({ error: message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' },

@@ -1,5 +1,5 @@
 import NotFoundPage from "@/app/not-found";
-//import { products } from "@/app/product-data"
+import Image from "next/image";
 
 export default async function ProductDetailsPage({params}: {params: {id: string}}) {
     const res = await fetch(`/api/products/${params.id}`, { cache: 'no-store' });
@@ -12,9 +12,11 @@ export default async function ProductDetailsPage({params}: {params: {id: string}
     return (
         <div className="container mx-auto p-8 pb-20 flex flex-col md:flex-row">
             <div className="md:w-1/2 mb-8 md:mb-0 mr-8 flex justify-center">
-                <img 
+                <Image 
                     src={'/' + product.imageUrl} 
                     alt={product.name}
+                    width={600}
+                    height={600}
                     className="w-full h-auto max-w-md rounded-lg shadow-lg"
                 />
             </div>

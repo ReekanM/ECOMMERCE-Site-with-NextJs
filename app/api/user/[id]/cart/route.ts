@@ -1,16 +1,16 @@
 import { NextRequest } from 'next/server';
 import { connectToDb } from '@/app/api/db';
+import type { UpdateFilter } from 'mongodb';
 
-type ShoppingCart = Record<string, string[]>;
-
-const carts: ShoppingCart = {
-  '1': ['123', '234'],
-  '2': ['345', '456'],
-  '3': ['234'],
-}
+// Removed unused local carts stub to satisfy ESLint
 
 type Params = {
   id: string;
+}
+
+type CartDoc = {
+  userId: string;
+  cartIds: string[];
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<Params> }) {
@@ -50,13 +50,14 @@ export async function POST(request: NextRequest, context: { params: Promise<Para
   const body: CartBody = await request.json();
   const productId = body.productId;
 
-  const updatedCart = await db.collection('carts').findOneAndUpdate(
+  const updatedCartResult = await db.collection<CartDoc>('carts').findOneAndUpdate(
     { userId },
-    { $push: { cartIds: { $each: [productId] } } } as any,
+    { $push: { cartIds: { $each: [productId] } } } as UpdateFilter<CartDoc>,
     { upsert: true, returnDocument: 'after' },
-  )
+  ) as unknown;
+  const updatedCartDoc = (updatedCartResult as { value: CartDoc | null }).value;
 
-  if (!updatedCart) {
+  if (!updatedCartDoc) {
     return new Response(JSON.stringify([]), {
       status: 201,
       headers: {
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest, context: { params: Promise<Para
     });
   }
 
-  const cartProducts = await db.collection('products').find({ id: { $in: updatedCart.cartIds } }).toArray()
+  const cartProducts = await db.collection('products').find({ id: { $in: updatedCartDoc.cartIds } }).toArray()
 
   return new Response(JSON.stringify(cartProducts), {
     status: 201,
@@ -82,13 +83,13 @@ export async function DELETE(request: NextRequest, context: { params: Promise<Pa
   const body = await request.json();
   const productId = body.productId;
 
-  const updatedCart = await db.collection('carts').findOneAndUpdate(
+  const updatedCartResult = await db.collection<CartDoc>('carts').findOneAndUpdate(
     { userId },
     { $pull: { cartIds: productId } },
     { returnDocument: 'after' }
-  );
-
-  if (!updatedCart) {
+  ) as unknown;
+  const updatedCartDoc = (updatedCartResult as { value: CartDoc | null }).value;
+  if (!updatedCartDoc) {
     return new Response(JSON.stringify([]), {
       status: 202,
       headers: {
@@ -97,7 +98,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<Pa
     })
   }
 
-  const cartProducts = await db.collection('products').find({ id: { $in: updatedCart.cartIds } }).toArray();
+  const cartProducts = await db.collection('products').find({ id: { $in: updatedCartDoc.cartIds } }).toArray();
 
   return new Response(JSON.stringify(cartProducts), {
     status: 202,
