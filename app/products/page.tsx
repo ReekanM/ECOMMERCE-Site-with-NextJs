@@ -5,14 +5,28 @@ export const dynamic = 'force-dynamic';
 export default async function ProductsPage() {
     const hdrs = await headers();
     const host = hdrs.get('x-forwarded-host') || hdrs.get('host');
-    const proto = (hdrs.get('x-forwarded-proto') || 'http');
-    const baseUrl = `${proto}://${host}`;
+    const proto = hdrs.get('x-forwarded-proto') || 'https';
+    const baseUrl = host ? `${proto}://${host}` : '';
 
-    const res = await fetch(`${baseUrl}/api/products`, { cache: 'no-store' });
-    const products = await res.json();
+    let products: any[] = [];
+    let cartProducts: any[] = [];
+    try {
+        const res = await fetch(`${baseUrl}/api/products`, { cache: 'no-store' });
+        if (res.ok) {
+            products = await res.json();
+        }
+    } catch (_) {
+        // swallow to avoid crashing page in production
+    }
 
-    const response2 = await fetch(`${baseUrl}/api/user/2/cart`, { cache: 'no-store' });
-    const cartProducts = await response2.json();
+    try {
+        const response2 = await fetch(`${baseUrl}/api/user/2/cart`, { cache: 'no-store' });
+        if (response2.ok) {
+            cartProducts = await response2.json();
+        }
+    } catch (_) {
+        // swallow to avoid crashing page in production
+    }
 
     return (
         <div className="container mx-auto p-8"> 
